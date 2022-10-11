@@ -2,7 +2,8 @@ import json
 import re
 import itertools
 from PIL import ImageFont
-
+from PIL import Image
+from PIL import ImageDraw
 
 
 if __name__ == "__main__":
@@ -14,25 +15,32 @@ if __name__ == "__main__":
 
     # Create a font object Times New Roman, 10 pt
     font = ImageFont.truetype("times.ttf", 12)
+    # font = ImageFont.truetype("TimesNewRomanPSMT.ttf", 12)
 
 
     # Split the sentence into words and punctuation but keep the conjunctions 
     sentence_split = re.split(r"(\s+)", starter_sentence)
+    # print(f'1. {sentence_split}')
 
     # Split the '.' and ',' and ';' from the words
     sentence_split = [re.split(r"([.,;])", i) for i in sentence_split]
+    # print(f'2. {sentence_split}')
 
     # Flatten the list
     sentence_split = [item for sublist in sentence_split for item in sublist]
+    # print(f'3. {sentence_split}')
 
     # Remove empty strings
     sentence_split = [i for i in sentence_split if i != '']
+    # print(f'4. {sentence_split}')
 
     # Split '--' as its own element
     sentence_split = [re.split(r"(\-\-)", i) for i in sentence_split]
+    # print(f'5. {sentence_split}')
 
     # Flatten the list
     sentence_split = [item for sublist in sentence_split for item in sublist]
+    # print(f'6. {sentence_split}')
 
 
 
@@ -40,12 +48,27 @@ if __name__ == "__main__":
 
     # Iterate through the sentence split
     for i in range(len(sentence_split)):
-        # If the word is in any of the lists in the fullCombinations list, print the word and the list it is in
+        # If the word is in any of the lists in the fullCombinations list
         for j in range(len(fullCombinations)):
+            # Check if the word is in the replacement list
             if sentence_split[i] in fullCombinations[j]:
                 replacements.append(fullCombinations[j])
 
                 # Repalce the element in the sentence split with %s
+                sentence_split[i] = "%s"
+            # Check if only making the first letter of the word lowercase will make it in the replacement list
+            elif sentence_split[i][0].lower() + sentence_split[i][1:] in fullCombinations[j]:
+                # for k in fullCombinations[j]:
+                #     print(k[0].upper() + k[1:])
+                replacements.append([k[0].upper() + k[1:] for k in fullCombinations[j]])
+
+                # Replace the element in the sentence split with %s
+                sentence_split[i] = "%s"
+            # Check if making all the letters lowercase will make it in the replacement list
+            elif sentence_split[i].lower() in fullCombinations[j]:
+                replacements.append([k.upper() for k in fullCombinations[j]])
+
+                # Replace the element in the sentence split with %s
                 sentence_split[i] = "%s"
 
     
@@ -63,6 +86,7 @@ if __name__ == "__main__":
         # If it does, replace 'a' with 'an' and vice versa
         # If it doesn't, replace 'an' with 'a' and vice versa
         t = temp_sentence.split()
+        # print(t)
         for j in range(len(t)):
             if t[j] == 'a' or t[j] == 'an':
                 if t[j+1][0] in ['a', 'e', 'i', 'o', 'u']:
@@ -76,30 +100,40 @@ if __name__ == "__main__":
         temp_sentence = " ".join(t)
 
         temp_sentence = '- ' + temp_sentence
+        # print(temp_sentence, list(temp_sentence))
 
         # Calculate the length of the sentence
-        length = font.getsize(temp_sentence)[0]
+        length = font.getlength(temp_sentence)
+
+
+        # calculate the length of the sentence in inches
+        length_in_inches = length / 72
 
         # Append the sentence and the length to the results list
-        if length <= 600 and length >= 540:
-            results.append((temp_sentence, length))
-        # results.append((temp_sentence, length))
+        # if length <= 600 and length >= 540:
+        #     results.append((temp_sentence, length))
+        results.append((temp_sentence, length))
 
     # Sort the results list by the length of the sentence in descending order
     results.sort(key=lambda x: x[1], reverse=True)
 
-    print(
-        """\nOrdered by length in ascending order.
-\nLengths are fickle so if one is too long work your way up the list
-and keep trying until you get one you like that also fits.\n
+#     print(
+#         """\nOrdered by length in ascending order.
+# \nLengths are fickle so if one is too long work your way up the list
+# and keep trying until you get one you like that also fits.\n
 
-Length 558 seems to be the sweet spot.
+# Length 558 seems to be the sweet spot.
 
-Results:\n
-        """
-    )
+# Results:\n
+#         """
+#     )
 
     for result in results:
-        print(result[0], '\tLength:', result[1])
+        print(result[0], '\tLength:', result[1], font.getbbox(result[0])[2])
+        # image = Image.new('RGB', font.getsize(result[0]))
+        # draw = ImageDraw.Draw(image)
+        # draw.text((0,0), result[0], font=font)
+        # # Show the image
+        # image.show()
 
         
